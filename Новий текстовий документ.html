@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<style>
+    .arrow {
+        margin-left: 5px;
+        font-size: 10px;
+    }
+</style>
+<body>
+<input type="file" id="fileinput" />
+<input type="button" value="Generate a table" onclick="generateTable()" />
+<div id="table-container"></div>
+<script>
+    function readSingleFile(evt) {
+        let f = evt.target.files[0];
+        if (f) {
+            let r = new FileReader();
+            r.onload = async function(e) {
+                let contents = e.target.result.split('\n').map(e => e.replace('\r', '').split(';'))
+                let fields = contents[0]
+                contents.shift()
+                console.log(contents)
+
+                let result = contents.map(e => {
+                    return {
+                        name: e[fields.indexOf('Name')],
+                        dateOfBirth: e[fields.indexOf('Date of birth')],
+                        married: e[fields.indexOf('Married')],
+                        phone: e[fields.indexOf('Phone')],
+                        salary: e[fields.indexOf('Salary')]
+                    }
+                })
+                try {
+                    console.log(result)
+                    await fetch("http://localhost:8000/file", {
+                        method: "POST",
+                        body: JSON.stringify(result),
+                        headers: {
+                            "Content-type": "application/json; charset=UTF-8"
+                        }
+                    })
+                }
+                catch (e){
+                    console.log(e)
+                }
+
+
+
+            }
+            r.readAsText(f);
+        } else {
+            alert("Failed to load file");
+        }
+    }
+    document.getElementById('fileinput').addEventListener('change', readSingleFile);
+    async function generateTable() {
+        let data = await fetch("http://localhost:8000/getfiles", {
+            method: "GET",
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        })
+        data = await data.json()
+
+
+        let sortKey = '';
+        let sortDirection = '';
+
+        const sortTable = (key) => {
+            if (sortKey === key) {
+                sortDirection = (sortDirection === 'asc') ? 'desc' : 'asc';
+            } else {
+                sortKey = key;
+                sortDirection = 'asc';
+            }
+
+            data.sort((a, b) => {
+                const valueA = a[key].toLowerCase();
+                const valueB = b[key].toLowerCase();
+
+                let comparison = 0;
+                if (valueA > valueB) {
+                    comparison = 1;
+                } else if (valueA < valueB) {
+                    comparison = -1;
+                }
+
+                return (sortDirection === 'asc') ? comparison : -comparison;
+            });
+
+            renderTable();
+        };
+
+        const renderTable = () => {
+            // Clear the existing table
+            const tableContainer = document.getElementById("table-container");
+            tableContainer.innerHTML = "";
+
+            // Create the table element
+            const table = document.createElement("table");
+
+            // Create the table header
+            const thead = document.createElement("thead");
+            const headerRow = document.createElement("tr");
+            Object.keys(data[0]).forEach(key => {
+                const th = document.createElement("th");
+                th.textContent = key;
+                th.addEventListener("click", () => {
+                    sortTable(key);
+                });
+
+                // Add arrow indicator for sorting direction
+                if (sortKey === key) {
+                    const arrow = sortDirection === 'asc' ? '&#8595;' : '&#8593;';
+                    th.innerHTML += <span class="arrow">${arrow}</span>;
+                }
+
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
