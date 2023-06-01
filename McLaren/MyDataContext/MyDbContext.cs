@@ -10,7 +10,7 @@ public class MyDbContext : DbContext
 
     public MyDbContext(DbContextOptions<MyDbContext> options) : base(options)
     {
-        //Database.EnsureCreated();
+        Database.EnsureCreated();
     }
     public DbSet<FileModel> Files { get; set; }
     

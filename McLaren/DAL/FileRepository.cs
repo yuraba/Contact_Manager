@@ -32,10 +32,6 @@ public class FileRepository
     }
        public async Task<ActionResult<FileModel>> Delete(int? id)
     {
-       
-
-        var file = await _context.Files
-            .FirstOrDefaultAsync(m => m.FileId == id);
-        return file;
+        return await _context.Files.FirstOrDefaultAsync(m => m.FileId == id);
     }
 }
