@@ -14,8 +14,10 @@ public class FileService
     }
     public async Task<ActionResult<FileModel>> Create(FileModel product)
     {
-        return await _fileRepository.Create(product);
+        await _fileRepository.Create(product);
+        return product;
     }
+    
     public async Task<ActionResult<IEnumerable<FileModel>>> GetFiles()
     {
        return await _fileRepository.GetFiles();
