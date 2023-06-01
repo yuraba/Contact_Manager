@@ -1,5 +1,6 @@
 using McLaren.Models;
 using McLaren.MyDataContext;
+using McLaren.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +11,7 @@ namespace McLaren.Controllers;
 public class FileController : Controller
 {
     private readonly MyDbContext _context;
-
+    private readonly FileService _fileService;
     public FileController(MyDbContext context)
     {
         _context = context;
@@ -21,20 +22,14 @@ public class FileController : Controller
     {
         if (ModelState.IsValid)
         {
-            _context.Add(product);
-            await _context.SaveChangesAsync();
-            return product;
+           await _fileService.Create(product);
         }
         return NotFound();
     }
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<FileModel>>> GetAccounts()
+    public async Task<ActionResult<IEnumerable<FileModel>>> GetFiles()
     {
-        if (_context.Files == null)
-        {
-            return NotFound();
-        }
-        return await _context.Files.ToListAsync();
+        return await _fileService.GetFiles();
     }
     [HttpPut]
     public async Task<ActionResult<FileModel>> Edit(int id, FileModel file)
@@ -43,13 +38,11 @@ public class FileController : Controller
         {
             return NotFound();
         }
-
         if (ModelState.IsValid)
         {
             try
             {
-                _context.Update(file);
-                await _context.SaveChangesAsync();
+                return await _fileService.Edit(file);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -62,7 +55,6 @@ public class FileController : Controller
                     throw;
                 }
             }
-            return file;
         }
         return NotFound();
     }
